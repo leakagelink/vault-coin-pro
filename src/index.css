@@ -67,6 +67,10 @@
   
   body {
     @apply bg-background text-foreground font-sans;
+    background-image: 
+      radial-gradient(circle at 20% 80%, hsla(215, 85%, 55%, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsla(142, 76%, 36%, 0.1) 0%, transparent 50%);
+    background-attachment: fixed;
   }
   
   .crypto-gradient {
@@ -84,11 +88,12 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card/50 backdrop-blur-sm border border-border/50;
+    @apply bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg;
+    backdrop-filter: blur(16px) saturate(180%);
   }
   
   .crypto-button {
-    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105;
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 shadow-md;
   }
   
   .profit-text {
@@ -98,4 +103,63 @@
   .loss-text {
     @apply text-destructive font-medium;
   }
+  
+  /* Animated background */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  /* Pulse animation for active states */
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  
+  .animate-pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Enhanced hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply transform -translate-y-1 shadow-xl;
+  }
+  
+  /* Loading skeleton improved */
+  .loading-skeleton {
+    @apply animate-pulse bg-gradient-to-r from-muted/50 via-muted/80 to-muted/50 bg-[length:200%_100%];
+    animation: loading-wave 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes loading-wave {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary)/0.8);
 }

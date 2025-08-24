@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import AuthScreen from '@/components/Auth/AuthScreen';
+import Header from '@/components/Layout/Header';
 import BottomNavigation from '@/components/Layout/BottomNavigation';
 import HomePage from '@/components/Dashboard/HomePage';
 import PortfolioPage from '@/components/Portfolio/PortfolioPage';
@@ -36,7 +37,8 @@ const MainApp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="min-h-screen">
+      <Header />
+      <main className="min-h-screen pt-16">
         {renderContent()}
       </main>
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />

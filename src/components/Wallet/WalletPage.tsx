@@ -13,13 +13,13 @@ import {
   Smartphone,
   TrendingUp,
   TrendingDown,
-  Calendar
+  Calendar,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const WalletPage: React.FC = () => {
   const { userData } = useAuth();
-  const [activeAction, setActiveAction] = useState<'deposit' | 'withdraw' | null>(null);
 
   // Mock transaction data
   const transactions = [
@@ -39,7 +39,7 @@ const WalletPage: React.FC = () => {
       method: 'Bank Account',
       status: 'pending',
       timestamp: new Date('2024-01-19 10:15'),
-      description: 'Withdrawal to SBI Account'
+      description: 'Withdrawal to Bank Account'
     },
     {
       id: '3',
@@ -53,9 +53,9 @@ const WalletPage: React.FC = () => {
   ];
 
   const paymentMethods = [
-    { id: 'upi', name: 'UPI', icon: Smartphone, available: true },
+    { id: 'upi', name: 'UPI Payment', icon: Smartphone, available: true },
     { id: 'bank', name: 'Bank Account', icon: CreditCard, available: true },
-    { id: 'usdt', name: 'USDT', icon: TrendingUp, available: true },
+    { id: 'usdt', name: 'USDT (Tether)', icon: Coins, available: true },
   ];
 
   const getTransactionIcon = (type: string) => {
@@ -77,7 +77,7 @@ const WalletPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       {/* Wallet Header */}
       <div className="bg-card/50 backdrop-blur-sm p-6 rounded-b-xl">
         <div className="flex items-center justify-between mb-6">
@@ -93,25 +93,19 @@ const WalletPage: React.FC = () => {
         </div>
 
         {/* Balance Card */}
-        <Card className="glass-card">
+        <Card className="glass-card crypto-gradient text-white">
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-muted-foreground mb-2">Total Balance</p>
+              <p className="text-white/80 mb-2">Total Balance</p>
               <p className="text-4xl font-bold mb-4">
-                ₹{userData?.wallet?.balance?.toLocaleString() || '0'}
+                ${userData?.wallet?.balance?.toLocaleString() || '0.00'}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  className="crypto-button"
-                  onClick={() => setActiveAction('deposit')}
-                >
+                <Button className="bg-white/20 hover:bg-white/30 text-white border-0">
                   <Plus className="h-4 w-4 mr-2" />
                   Deposit
                 </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setActiveAction('withdraw')}
-                >
+                <Button className="bg-white/10 hover:bg-white/20 text-white border-white/20">
                   <Minus className="h-4 w-4 mr-2" />
                   Withdraw
                 </Button>
@@ -121,10 +115,10 @@ const WalletPage: React.FC = () => {
         </Card>
       </div>
 
-      <div className="px-4">
+      <div className="px-4 pb-20">
         <Tabs defaultValue="transactions" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="transactions">History</TabsTrigger>
             <TabsTrigger value="deposit">Deposit</TabsTrigger>
             <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
           </TabsList>
@@ -161,7 +155,7 @@ const WalletPage: React.FC = () => {
                         transaction.type === 'withdraw' ? 'text-destructive' : 
                         'text-foreground'
                       }`}>
-                        {transaction.type === 'deposit' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
+                        {transaction.type === 'deposit' ? '+' : '-'}${transaction.amount.toLocaleString()}
                       </p>
                       <Badge 
                         variant="outline" 
