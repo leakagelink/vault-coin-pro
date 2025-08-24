@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +11,10 @@ import {
   Archive,
   ShoppingCart
 } from 'lucide-react';
+import PositionsList from './PositionsList';
+import OpenPositionDialog from './OpenPositionDialog';
+import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
 
 const PortfolioPage: React.FC = () => {
   // Mock portfolio data
@@ -78,6 +81,9 @@ const PortfolioPage: React.FC = () => {
     return positionsValue + holdingsValue;
   };
 
+  const queryClient = useQueryClient();
+  const [openDialog, setOpenDialog] = useState(false);
+
   return (
     <div className="space-y-6 pb-20">
       {/* Portfolio Header */}
@@ -130,54 +136,17 @@ const PortfolioPage: React.FC = () => {
 
           <TabsContent value="positions" className="space-y-3">
             <Card className="glass-card">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
                   <Activity className="h-5 w-5" />
                   <span>Active Positions</span>
                 </CardTitle>
+                <Button size="sm" onClick={() => setOpenDialog(true)}>
+                  Add Position
+                </Button>
               </CardHeader>
               <CardContent className="space-y-3">
-                {positions.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No active positions</p>
-                  </div>
-                ) : (
-                  positions.map((position) => (
-                    <div key={position.id} className="p-4 bg-secondary/30 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold">{position.symbol}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {position.amount} {position.symbol}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{position.name}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center space-x-1">
-                            {position.pnl >= 0 ? (
-                              <TrendingUp className="h-3 w-3 text-success" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3 text-destructive" />
-                            )}
-                            <span className={`font-semibold text-sm ${position.pnl >= 0 ? 'profit-text' : 'loss-text'}`}>
-                              {position.pnl >= 0 ? '+' : ''}₹{position.pnl.toLocaleString()}
-                            </span>
-                          </div>
-                          <p className={`text-xs ${position.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                            {position.pnl >= 0 ? '+' : ''}{position.pnlPercent.toFixed(2)}%
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Buy: ₹{position.buyPrice.toLocaleString()}</span>
-                        <span>Current: ₹{position.currentPrice.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+                <PositionsList />
               </CardContent>
             </Card>
           </TabsContent>
@@ -297,6 +266,16 @@ const PortfolioPage: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <OpenPositionDialog
+        open={openDialog}
+        onOpenChange={(open) => {
+          setOpenDialog(open);
+          if (!open) {
+            queryClient.invalidateQueries({ queryKey: ['positions'] });
+          }
+        }}
+      />
     </div>
   );
 };
