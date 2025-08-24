@@ -88,8 +88,8 @@ const AccountPage: React.FC = () => {
             <h1 className="text-2xl font-bold">{userData?.displayName || 'User'}</h1>
             <p className="text-muted-foreground">{currentUser?.email}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Member since {currentUser?.metadata.creationTime ? 
-                new Date(currentUser.metadata.creationTime).toLocaleDateString() : 
+              Member since {currentUser?.created_at ? 
+                new Date(currentUser.created_at).toLocaleDateString() : 
                 'Recently'
               }
             </p>

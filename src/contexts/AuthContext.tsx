@@ -44,28 +44,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     console.log('[Auth] Fetching profile for', userId);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error('[Auth] profile fetch error', error);
-      return;
-    }
+      if (error) {
+        console.error('[Auth] profile fetch error', error);
+        return;
+      }
 
-    if (data) {
-      const profileUserData: UserData = {
-        uid: data.id,
-        email: data.email,
-        displayName: data.display_name,
-        wallet: undefined,
-        portfolio: undefined,
-      };
-      setUserData(profileUserData);
-    } else {
-      setUserData(null);
+      if (data) {
+        const profileUserData: UserData = {
+          uid: data.id,
+          email: data.email,
+          displayName: data.display_name,
+          wallet: undefined,
+          portfolio: undefined,
+        };
+        setUserData(profileUserData);
+      } else {
+        setUserData(null);
+      }
+    } catch (error) {
+      console.error('[Auth] Profile fetch failed:', error);
     }
   };
 
