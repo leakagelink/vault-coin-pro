@@ -27,16 +27,16 @@ const AuthScreen: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) {
-      toast.error('कृपया सभी फ़ील्ड भरें');
+      toast.error('Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
       await login(loginData.email, loginData.password);
-      toast.success('सफलतापूर्वक लॉगिन हो गए!');
+      toast.success('Logged in successfully!');
     } catch (error: any) {
-      toast.error('लॉगिन में त्रुटि: ' + error.message);
+      toast.error('Login error: ' + (error?.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -45,21 +45,21 @@ const AuthScreen: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signupData.email || !signupData.password || !signupData.displayName) {
-      toast.error('कृपया सभी फ़ील्ड भरें');
+      toast.error('Please fill in all fields');
       return;
     }
 
     if (signupData.password !== signupData.confirmPassword) {
-      toast.error('पासवर्ड मेल नहीं खा रहे');
+      toast.error('Passwords do not match');
       return;
     }
 
     setLoading(true);
     try {
       await signup(signupData.email, signupData.password, signupData.displayName);
-      toast.success('अकाउंट बन गया! स्वागत है!');
+      toast.success('Account created! Please check your email to confirm (if required).');
     } catch (error: any) {
-      toast.error('साइनअप में त्रुटि: ' + error.message);
+      toast.error('Signup error: ' + (error?.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -79,15 +79,15 @@ const AuthScreen: React.FC = () => {
             CryptoVault Pro
           </h1>
           <p className="text-muted-foreground mt-2">
-            भारत का सबसे भरोसेमंद क्रिप्टो ऐप
+            India&apos;s most trusted crypto app
           </p>
         </div>
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle>शुरुआत करें</CardTitle>
+            <CardTitle>Get Started</CardTitle>
             <CardDescription>
-              अपने क्रिप्टो जर्नी की शुरुआत करें
+              Sign in or create a new account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,7 +102,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="email"
-                      placeholder="ईमेल एड्रेस"
+                      placeholder="Email address"
                       value={loginData.email}
                       onChange={(e) => setLoginData(prev => ({
                         ...prev,
@@ -114,7 +114,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="password"
-                      placeholder="पासवर्ड"
+                      placeholder="Password"
                       value={loginData.password}
                       onChange={(e) => setLoginData(prev => ({
                         ...prev,
@@ -129,7 +129,7 @@ const AuthScreen: React.FC = () => {
                     disabled={loading}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Login करें
+                    Login
                   </Button>
                 </form>
               </TabsContent>
@@ -139,7 +139,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="text"
-                      placeholder="पूरा नाम"
+                      placeholder="Full name"
                       value={signupData.displayName}
                       onChange={(e) => setSignupData(prev => ({
                         ...prev,
@@ -151,7 +151,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="email"
-                      placeholder="ईमेल एड्रेस"
+                      placeholder="Email address"
                       value={signupData.email}
                       onChange={(e) => setSignupData(prev => ({
                         ...prev,
@@ -163,7 +163,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="password"
-                      placeholder="पासवर्ड"
+                      placeholder="Password"
                       value={signupData.password}
                       onChange={(e) => setSignupData(prev => ({
                         ...prev,
@@ -175,7 +175,7 @@ const AuthScreen: React.FC = () => {
                   <div className="space-y-2">
                     <Input
                       type="password"
-                      placeholder="पासवर्ड कन्फर्म करें"
+                      placeholder="Confirm password"
                       value={signupData.confirmPassword}
                       onChange={(e) => setSignupData(prev => ({
                         ...prev,
@@ -190,7 +190,7 @@ const AuthScreen: React.FC = () => {
                     disabled={loading}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    अकाउंट बनाएं
+                    Create account
                   </Button>
                 </form>
               </TabsContent>

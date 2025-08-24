@@ -9,6 +9,7 @@ import PortfolioPage from '@/components/Portfolio/PortfolioPage';
 import WatchlistPage from '@/components/Watchlist/WatchlistPage';
 import WalletPage from '@/components/Wallet/WalletPage';
 import AccountPage from '@/components/Account/AccountPage';
+import LiveTicker from '@/components/Market/LiveTicker';
 
 const MainApp: React.FC = () => {
   const { currentUser } = useAuth();
@@ -39,6 +40,7 @@ const MainApp: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="min-h-screen pt-16">
+        <LiveTicker />
         {renderContent()}
       </main>
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />

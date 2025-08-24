@@ -1,15 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile
-} from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import type { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState } from '@/lib/cleanupAuthState';
 
 interface UserData {
   uid: string;
@@ -27,6 +20,7 @@ interface UserData {
 
 interface AuthContextType {
   currentUser: User | null;
+  session: Session | null;
   userData: UserData | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, displayName: string) => Promise<void>;
@@ -38,76 +32,140 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchProfile = async (userId: string) => {
+    console.log('[Auth] Fetching profile for', userId);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[Auth] profile fetch error', error);
+      return;
+    }
+
+    if (data) {
+      const profileUserData: UserData = {
+        uid: data.id,
+        email: data.email,
+        displayName: data.display_name,
+        wallet: undefined,
+        portfolio: undefined,
+      };
+      setUserData(profileUserData);
+    } else {
+      setUserData(null);
+    }
+  };
+
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    console.log('[Auth] login start for', email);
+    // Clean any stale tokens and attempt a global sign out
+    cleanupAuthState();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      // ignore
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (data.session) {
+      // Hard refresh to ensure full clean state
+      window.location.href = '/';
+    }
   };
 
   const signup = async (email: string, password: string, displayName: string) => {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(user, { displayName });
-    
-    // Create user document in Firestore
-    const userDoc = {
-      uid: user.uid,
-      email: user.email!,
-      displayName,
-      wallet: {
-        balance: 0,
-        transactions: []
+    console.log('[Auth] signup start for', email);
+    cleanupAuthState();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      // ignore
+    }
+
+    const redirectUrl = `${window.location.origin}/`;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          display_name: displayName,
+        },
       },
-      portfolio: {
-        positions: [],
-        holdings: []
-      },
-      createdAt: new Date()
-    };
-    
-    await setDoc(doc(db, 'users', user.uid), userDoc);
+    });
+    if (error) throw error;
+
+    // If email confirmations are enabled, user must confirm; otherwise session may exist
+    if (data.session) {
+      window.location.href = '/';
+    }
   };
 
   const logout = async () => {
-    await signOut(auth);
-    setUserData(null);
+    console.log('[Auth] logout');
+    cleanupAuthState();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      // ignore
+    }
+    // Force a clean reload
+    window.location.href = '/';
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
-        // Fetch user data from Firestore
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData);
-        }
+    console.log('[Auth] init listener');
+    // Set up listener FIRST
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log('[Auth] onAuthStateChange', event);
+      setSession(newSession);
+      setCurrentUser(newSession?.user ?? null);
+
+      const userId = newSession?.user?.id;
+      if (userId) {
+        // Defer any additional supabase calls to avoid deadlocks
+        setTimeout(() => fetchProfile(userId), 0);
       } else {
         setUserData(null);
       }
-      
+    });
+
+    // Then load current session
+    supabase.auth.getSession().then(({ data: { session: current } }) => {
+      setSession(current);
+      setCurrentUser(current?.user ?? null);
+      const userId = current?.user?.id;
+      if (userId) setTimeout(() => fetchProfile(userId), 0);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const value = {
+  const value: AuthContextType = {
     currentUser,
+    session,
     userData,
     login,
     signup,
     logout,
-    loading
+    loading,
   };
 
   return (
