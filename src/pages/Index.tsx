@@ -1,13 +1,54 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import AuthScreen from '@/components/Auth/AuthScreen';
+import BottomNavigation from '@/components/Layout/BottomNavigation';
+import HomePage from '@/components/Dashboard/HomePage';
+import PortfolioPage from '@/components/Portfolio/PortfolioPage';
+import WatchlistPage from '@/components/Watchlist/WatchlistPage';
+import WalletPage from '@/components/Wallet/WalletPage';
+import AccountPage from '@/components/Account/AccountPage';
+
+const MainApp: React.FC = () => {
+  const { currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState('home');
+
+  if (!currentUser) {
+    return <AuthScreen />;
+  }
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomePage />;
+      case 'portfolio':
+        return <PortfolioPage />;
+      case 'watchlist':
+        return <WatchlistPage />;
+      case 'wallet':
+        return <WalletPage />;
+      case 'account':
+        return <AccountPage />;
+      default:
+        return <HomePage />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <main className="min-h-screen">
+        {renderContent()}
+      </main>
+      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  );
+};
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 };
 
