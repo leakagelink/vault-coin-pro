@@ -1,5 +1,5 @@
 
-import { CMC_API_KEY } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface CryptoData {
   id: number;
@@ -16,75 +16,25 @@ export interface CryptoData {
   };
 }
 
-// Note: Due to CORS restrictions, in production you'd need to proxy this through your backend
-// For demo purposes, we'll use mock data that simulates the API structure
+// Fetch live crypto prices via Supabase Edge Function "cmc-proxy"
+// Requires a Supabase secret named CMC_API_KEY configured in the project
 export const fetchCryptoPrices = async (): Promise<CryptoData[]> => {
-  // In a real app, you'd make this call through your backend to avoid CORS issues
-  // const response = await fetch(`${CMC_BASE_URL}/cryptocurrency/listings/latest?limit=20`, {
-  //   headers: {
-  //     'X-CMC_PRO_API_KEY': CMC_API_KEY,
-  //   },
-  // });
-  
-  // Mock data that matches CMC API structure
-  return [
-    {
-      id: 1,
-      name: "Bitcoin",
-      symbol: "BTC",
-      quote: {
-        USD: {
-          price: 43250.67,
-          percent_change_24h: 2.34,
-          percent_change_7d: 5.67,
-          market_cap: 847234567890,
-          volume_24h: 23456789012
-        }
-      }
-    },
-    {
-      id: 1027,
-      name: "Ethereum",
-      symbol: "ETH",
-      quote: {
-        USD: {
-          price: 2645.32,
-          percent_change_24h: -1.67,
-          percent_change_7d: 3.45,
-          market_cap: 318234567890,
-          volume_24h: 15678901234
-        }
-      }
-    },
-    {
-      id: 1839,
-      name: "BNB",
-      symbol: "BNB",
-      quote: {
-        USD: {
-          price: 315.67,
-          percent_change_24h: 5.43,
-          percent_change_7d: -2.11,
-          market_cap: 48234567890,
-          volume_24h: 1234567890
-        }
-      }
-    },
-    {
-      id: 2010,
-      name: "Cardano",
-      symbol: "ADA",
-      quote: {
-        USD: {
-          price: 0.4567,
-          percent_change_24h: 0.89,
-          percent_change_7d: 7.23,
-          market_cap: 16234567890,
-          volume_24h: 567890123
-        }
-      }
-    }
-  ];
+  console.log('[Crypto] Fetching live prices via edge function cmc-proxy');
+  const { data, error } = await supabase.functions.invoke('cmc-proxy', {
+    body: { limit: 20, convert: 'USD' },
+  });
+
+  if (error) {
+    console.error('[Crypto] cmc-proxy error:', error);
+    throw error;
+  }
+
+  const list = (data as any)?.data;
+  if (!Array.isArray(list)) {
+    console.error('[Crypto] Unexpected response shape from cmc-proxy:', data);
+    return [];
+  }
+  return list as CryptoData[];
 };
 
 export const formatPrice = (price: number): string => {
