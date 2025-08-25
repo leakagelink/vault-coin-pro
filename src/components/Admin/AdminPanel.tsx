@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
-import { CircleCheck, CircleX, Banknote, HandCoins, Users, ListOrdered, Lock } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { CircleCheck, CircleX, Banknote, HandCoins, Users, ListOrdered, Lock, Wallet, CreditCard } from "lucide-react";
 import AdminSecurityTab from "./AdminSecurityTab";
+import AdminFundsTab from "./AdminFundsTab";
+import AdminPaymentSettings from "./AdminPaymentSettings";
 
 const SectionHeader: React.FC<{ title: string; icon?: React.ReactNode }> = ({ title, icon }) => (
   <div className="flex items-center gap-2">
@@ -93,7 +95,7 @@ const DepositsTab: React.FC = () => {
                 {data?.map((r: AdminDepositRequest) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-muted-foreground">{r.user_id}</TableCell>
-                    <TableCell className="font-medium">{Number(r.amount).toLocaleString()}</TableCell>
+                    <TableCell className="font-medium">₹{Number(r.amount).toLocaleString()}</TableCell>
                     <TableCell>{r.payment_method}</TableCell>
                     <TableCell className="text-xs">{r.transaction_reference ?? "-"}</TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
@@ -194,7 +196,7 @@ const WithdrawalsTab: React.FC = () => {
                 {data?.map((r: AdminWithdrawalRequest) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-muted-foreground">{r.user_id}</TableCell>
-                    <TableCell className="font-medium">{Number(r.amount).toLocaleString()}</TableCell>
+                    <TableCell className="font-medium">₹{Number(r.amount).toLocaleString()}</TableCell>
                     <TableCell className="text-xs">{r.bank_account_id ?? "-"}</TableCell>
                     <TableCell><StatusBadge status={r.status} /></TableCell>
                     <TableCell className="min-w-[180px]">
@@ -326,8 +328,8 @@ const PositionsTab: React.FC = () => {
                     <TableCell>{p.position_type}</TableCell>
                     <TableCell><StatusBadge status={p.status ?? "open"} /></TableCell>
                     <TableCell>{Number(p.amount)}</TableCell>
-                    <TableCell>{Number(p.buy_price)}</TableCell>
-                    <TableCell>{p.current_price != null ? Number(p.current_price) : "-"}</TableCell>
+                    <TableCell>₹{Number(p.buy_price)}</TableCell>
+                    <TableCell>{p.current_price != null ? `₹${Number(p.current_price)}` : "-"}</TableCell>
                     <TableCell className="text-sm">{p.created_at ? new Date(p.created_at).toLocaleString() : "-"}</TableCell>
                   </TableRow>
                 ))}
@@ -381,7 +383,7 @@ const TransactionsTab: React.FC = () => {
                     <TableCell className="font-medium">{t.transaction_type}</TableCell>
                     <TableCell>{t.symbol ?? "-"}</TableCell>
                     <TableCell>{t.amount != null ? Number(t.amount) : "-"}</TableCell>
-                    <TableCell>{Number(t.total_value)}</TableCell>
+                    <TableCell>₹{Number(t.total_value)}</TableCell>
                     <TableCell><StatusBadge status={t.status ?? "completed"} /></TableCell>
                     <TableCell className="text-sm">{t.created_at ? new Date(t.created_at).toLocaleString() : "-"}</TableCell>
                   </TableRow>
@@ -406,12 +408,20 @@ const AdminPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="deposits" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="deposits">Deposits</TabsTrigger>
           <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="funds" className="flex items-center gap-1">
+            <Wallet className="h-3.5 w-3.5" />
+            Funds
+          </TabsTrigger>
           <TabsTrigger value="positions">Positions</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="payments" className="flex items-center gap-1">
+            <CreditCard className="h-3.5 w-3.5" />
+            Payments
+          </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-1">
             <Lock className="h-3.5 w-3.5" />
             Security
@@ -430,12 +440,20 @@ const AdminPanel: React.FC = () => {
           <UsersTab />
         </TabsContent>
 
+        <TabsContent value="funds" className="space-y-4">
+          <AdminFundsTab />
+        </TabsContent>
+
         <TabsContent value="positions" className="space-y-4">
           <PositionsTab />
         </TabsContent>
 
         <TabsContent value="transactions" className="space-y-4">
           <TransactionsTab />
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-4">
+          <AdminPaymentSettings />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">

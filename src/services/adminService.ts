@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AdminDepositRequest {
@@ -59,6 +58,24 @@ export interface AdminPosition {
   position_type: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+export interface AdminWallet {
+  id: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentSettings {
+  upi_id: string | null;
+  qr_code_url: string | null;
+  bank_name: string | null;
+  account_number: string | null;
+  ifsc_code: string | null;
+  account_holder: string | null;
 }
 
 export const adminApi = {
@@ -138,6 +155,16 @@ export const adminApi = {
     return data as AdminProfile[];
   },
 
+  async fetchWallets(): Promise<AdminWallet[]> {
+    console.log("[Admin] Fetching wallets");
+    const { data, error } = await (supabase as any)
+      .from("wallets")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as AdminWallet[];
+  },
+
   async fetchPositions(): Promise<AdminPosition[]> {
     console.log("[Admin] Fetching positions");
     const { data, error } = await (supabase as any)
@@ -156,5 +183,60 @@ export const adminApi = {
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data as AdminTransaction[];
+  },
+
+  async addFundsToUser(userId: string, amount: number, notes: string = ""): Promise<void> {
+    console.log("[Admin] Adding funds to user", userId, amount);
+    const { data: session } = await supabase.auth.getSession();
+    const admin_id = session.session?.user?.id;
+    if (!admin_id) throw new Error("Not authenticated");
+    
+    const { error } = await (supabase as any).rpc("admin_add_funds", {
+      target_user_id: userId,
+      fund_amount: amount,
+      admin_id,
+      admin_notes: notes,
+    });
+    if (error) throw error;
+  },
+
+  // Payment settings functions
+  async fetchPaymentSettings(): Promise<PaymentSettings> {
+    console.log("[Admin] Fetching payment settings");
+    const { data, error } = await (supabase as any)
+      .from("payment_settings")
+      .select("*")
+      .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      throw error;
+    }
+    
+    return data || {
+      upi_id: null,
+      qr_code_url: null,
+      bank_name: null,
+      account_number: null,
+      ifsc_code: null,
+      account_holder: null,
+    };
+  },
+
+  async updatePaymentSettings(settings: PaymentSettings): Promise<void> {
+    console.log("[Admin] Updating payment settings");
+    const { data: session } = await supabase.auth.getSession();
+    const admin_id = session.session?.user?.id;
+    if (!admin_id) throw new Error("Not authenticated");
+    
+    const { error } = await (supabase as any)
+      .from("payment_settings")
+      .upsert({
+        id: 'default', // Single row for global settings
+        ...settings,
+        updated_by: admin_id,
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (error) throw error;
   },
 };
