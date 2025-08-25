@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi, AdminDepositRequest, AdminWithdrawalRequest } from "@/services/adminService";
@@ -9,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-import { CircleCheck, CircleX, Banknote, HandCoins, Users, ListOrdered } from "lucide-react";
+import { CircleCheck, CircleX, Banknote, HandCoins, Users, ListOrdered, Lock } from "lucide-react";
+import AdminSecurityTab from "./AdminSecurityTab";
 
 const SectionHeader: React.FC<{ title: string; icon?: React.ReactNode }> = ({ title, icon }) => (
   <div className="flex items-center gap-2">
@@ -153,9 +153,9 @@ const WithdrawalsTab: React.FC = () => {
     onSettled: async () => {
       toast({ title: "Withdrawal processed" });
       await Promise.all([
-        qc.invalidateQueries({ queryKey: ["admin", "withdrawal_requests"] }),
-        qc.invalidateQueries({ queryKey: ["admin", "wallets"] }),
-        qc.invalidateQueries({ queryKey: ["admin", "transactions"] }),
+        useQueryClient().invalidateQueries({ queryKey: ["admin", "withdrawal_requests"] }),
+        useQueryClient().invalidateQueries({ queryKey: ["admin", "wallets"] }),
+        useQueryClient().invalidateQueries({ queryKey: ["admin", "transactions"] }),
       ]);
     },
   });
@@ -165,7 +165,7 @@ const WithdrawalsTab: React.FC = () => {
     meta: { onError: (err: any) => console.error(err) },
     onSettled: async () => {
       toast({ title: "Withdrawal rejected" });
-      await qc.invalidateQueries({ queryKey: ["admin", "withdrawal_requests"] });
+      await useQueryClient().invalidateQueries({ queryKey: ["admin", "withdrawal_requests"] });
     },
   });
 
@@ -406,12 +406,16 @@ const AdminPanel: React.FC = () => {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="deposits" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="deposits">Deposits</TabsTrigger>
           <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="positions">Positions</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-1">
+            <Lock className="h-3.5 w-3.5" />
+            Security
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="deposits" className="space-y-4">
@@ -432,6 +436,10 @@ const AdminPanel: React.FC = () => {
 
         <TabsContent value="transactions" className="space-y-4">
           <TransactionsTab />
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-4">
+          <AdminSecurityTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     console.log('[Auth] Fetching profile for', userId);
     try {
-      // Use any type to work around missing type definitions
+      // Try to get existing profile
       const { data, error } = await (supabase as any)
         .from('profiles')
         .select('*')
@@ -54,14 +54,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('[Auth] profile fetch error', error);
-        return;
       }
 
-      if (data) {
+      // Ensure a profile exists; if missing, create it along with an initial wallet.
+      let profile = data;
+      if (!profile) {
+        console.log('[Auth] No profile found, creating one with default values');
+        const { data: userResp } = await supabase.auth.getUser();
+        const email = userResp.user?.email ?? null;
+        const display_name =
+          (userResp.user?.user_metadata as any)?.display_name ??
+          email ??
+          null;
+
+        // If using the seeded admin email, make the profile admin
+        const role = email === 'admin@example.com' ? 'admin' : 'user';
+
+        const { error: insertErr } = await (supabase as any)
+          .from('profiles')
+          .insert({
+            id: userId,
+            email,
+            display_name,
+            role,
+          });
+
+        if (insertErr) {
+          console.error('[Auth] profile insert error', insertErr);
+        } else {
+          console.log('[Auth] Profile created');
+        }
+
+        // Create initial wallet (if not exists)
+        const { error: walletInsertErr } = await (supabase as any)
+          .from('wallets')
+          .insert({
+            user_id: userId,
+            balance: 100000.0, // default starting balance to match server-side function
+          });
+
+        if (walletInsertErr) {
+          // It's okay if it already exists or fails; just log it.
+          console.warn('[Auth] wallet insert warn', walletInsertErr);
+        }
+
+        // Re-fetch profile after insert
+        const { data: prof2 } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        profile = prof2;
+      } else {
+        // If this is the seeded admin email but role isn't admin yet, promote it.
+        if (profile.email === 'admin@example.com' && profile.role !== 'admin') {
+          console.log('[Auth] Promoting admin@example.com to admin');
+          const { error: promoteErr } = await (supabase as any)
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', userId);
+          if (promoteErr) {
+            console.error('[Auth] admin promotion error', promoteErr);
+          } else {
+            // Refresh profile
+            const { data: prof3 } = await (supabase as any)
+              .from('profiles')
+              .select('*')
+              .eq('id', userId)
+              .maybeSingle();
+            profile = prof3 ?? profile;
+          }
+        }
+      }
+
+      if (profile) {
         const profileUserData: UserData = {
-          uid: data.id,
-          email: data.email,
-          displayName: data.display_name,
+          uid: profile.id,
+          email: profile.email,
+          displayName: profile.display_name,
           wallet: undefined,
           portfolio: undefined,
         };
@@ -179,3 +249,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
