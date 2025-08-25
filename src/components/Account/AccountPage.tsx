@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,9 +16,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import ProfileEditDialog from './ProfileEditDialog';
+import BankAccountDialog from './BankAccountDialog';
+import PasswordChangeDialog from './PasswordChangeDialog';
 
 const AccountPage: React.FC = () => {
   const { currentUser, userData, logout } = useAuth();
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [bankDialogOpen, setBankDialogOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -35,14 +41,14 @@ const AccountPage: React.FC = () => {
       title: 'Profile',
       description: 'View and edit profile',
       icon: User,
-      action: () => toast.info('Profile editing coming soon!')
+      action: () => setProfileDialogOpen(true)
     },
     {
       id: 'bank',
       title: 'Add Bank',
       description: 'Link your bank account',
       icon: CreditCard,
-      action: () => toast.info('Bank linking coming soon!')
+      action: () => setBankDialogOpen(true)
     },
     {
       id: 'deposit',
@@ -70,7 +76,7 @@ const AccountPage: React.FC = () => {
       title: 'Password Change',
       description: 'Update your password',
       icon: Lock,
-      action: () => toast.info('Password change coming soon!')
+      action: () => setPasswordDialogOpen(true)
     },
   ];
 
@@ -94,7 +100,7 @@ const AccountPage: React.FC = () => {
               }
             </p>
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setProfileDialogOpen(true)}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -194,6 +200,20 @@ const AccountPage: React.FC = () => {
           Logout
         </Button>
       </div>
+
+      {/* Dialogs */}
+      <ProfileEditDialog 
+        open={profileDialogOpen} 
+        onOpenChange={setProfileDialogOpen} 
+      />
+      <BankAccountDialog 
+        open={bankDialogOpen} 
+        onOpenChange={setBankDialogOpen} 
+      />
+      <PasswordChangeDialog 
+        open={passwordDialogOpen} 
+        onOpenChange={setPasswordDialogOpen} 
+      />
     </div>
   );
 };
