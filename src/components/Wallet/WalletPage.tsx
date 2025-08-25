@@ -17,9 +17,14 @@ import {
   Coins
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import AdminPanel from '@/components/Admin/AdminPanel';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 const WalletPage: React.FC = () => {
   const { userData } = useAuth();
+  const { isAdmin } = useIsAdmin();
+  const [adminOpen, setAdminOpen] = useState(false);
 
   // Mock transaction data
   const transactions = [
@@ -90,6 +95,22 @@ const WalletPage: React.FC = () => {
               <p className="text-muted-foreground">Manage your funds</p>
             </div>
           </div>
+
+          {isAdmin && (
+            <Dialog open={adminOpen} onOpenChange={setAdminOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="hidden sm:inline-flex">
+                  Admin Panel
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl">
+                <DialogHeader>
+                  <DialogTitle>Admin Panel</DialogTitle>
+                </DialogHeader>
+                <AdminPanel />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Balance Card */}
@@ -110,6 +131,14 @@ const WalletPage: React.FC = () => {
                   Withdraw
                 </Button>
               </div>
+
+              {isAdmin && (
+                <div className="mt-3 sm:hidden">
+                  <Button variant="outline" onClick={() => setAdminOpen(true)} className="w-full bg-background/60">
+                    Admin Panel
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
